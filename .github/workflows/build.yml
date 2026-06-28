@@ -16,24 +16,11 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Setup NuGet
-        uses: NuGet/setup-nuget@v2
-
-      - name: Download RAGEPluginHook stub
-        shell: powershell
-        run: |
-          New-Item -ItemType Directory -Force -Path "C:\GTAV\Plugins"
-          # Download RPH stub DLL for compilation (not the real game)
-          Invoke-WebRequest -Uri "https://github.com/YOUR_STUB_REPO/releases/download/stubs/RAGEPluginHook.exe" -OutFile "C:\GTAV\RAGEPluginHook.exe"
-
-      - name: Restore NuGet packages
-        run: nuget restore PolicePartner.csproj
-
       - name: Build
-        run: msbuild PolicePartner.csproj /p:Configuration=Release /p:Platform=x64 /p:GTAVPath="C:\GTAV"
+        run: msbuild PolicePartner.csproj /p:Configuration=Release /p:Platform=x64
 
-      - name: Upload artifact
+      - name: Upload DLL artifact
         uses: actions/upload-artifact@v4
         with:
           name: PolicePartner
-          path: bin/x64/Release/PolicePartner.dll
+          path: bin\x64\Release\PolicePartner.dll

@@ -11,45 +11,20 @@
     <Optimize>true</Optimize>
   </PropertyGroup>
 
-  <!--
-    ╔══════════════════════════════════════════════════════════════╗
-    ║  IMPORTANT: Update these paths to match YOUR GTA V install   ║
-    ╚══════════════════════════════════════════════════════════════╝
-  -->
-  <PropertyGroup>
-    <GTAVPath>C:\Program Files\Rockstar Games\Grand Theft Auto V</GTAVPath>
-  </PropertyGroup>
-
   <ItemGroup>
-    <!-- RAGEPluginHook -->
-<Reference Include="RAGEPluginHook">
-  <HintPath>libs\RAGEPluginHook.exe</HintPath>
-  <Private>false</Private>
-</Reference>
+    <!-- RPH from NuGet — no manual DLL needed -->
+    <PackageReference Include="RagePluginHook" Version="1.1.0" />
 
-    <!-- LSPDFR -->
-<Reference Include="LSPD First Response">
-  <HintPath>libs\LSPD First Response.dll</HintPath>
-  <Private>false</Private>
-</Reference>
+    <!-- These still come from libs/ — upload from your GTA V folder -->
+    <Reference Include="LSPD First Response">
+      <HintPath>libs\LSPD First Response.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
 
-    <!-- RageNativeUI -->
-<Reference Include="RAGENativeUI">
-  <HintPath>libs\RAGENativeUI.dll</HintPath>
-  <Private>false</Private>
-</Reference>
+    <Reference Include="RAGENativeUI">
+      <HintPath>libs\RAGENativeUI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
-
-  <!--
-    After build, copy output to GTAV plugins folder automatically.
-    Uncomment if you want this:
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll"
-          DestinationFolder="$(GTAVPath)\Plugins" />
-    <Copy SourceFiles="PolicePartner.ini"
-          DestinationFolder="$(GTAVPath)\Plugins\PolicePartner" />
-  </Target>
-  -->
 
 </Project>

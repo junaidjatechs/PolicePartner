@@ -16,6 +16,9 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Restore
+        run: dotnet restore PolicePartner.csproj
+
       - name: Build
         run: msbuild PolicePartner.csproj /p:Configuration=Release /p:Platform=x64
 

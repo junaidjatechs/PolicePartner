@@ -61,7 +61,14 @@ namespace PolicePartner
 
             // Gender — use string overload to avoid dynamic
             _genderItem = new UIMenuListItem("Gender", "Select partner gender.", GenderLabels);
-            _genderItem.OnListChanged += OnGenderChanged;
+            _genderItem.OnListChanged += (sender, index) =>
+            {
+                var newList = index == 1 ? FemaleModelLabels : MaleModelLabels;
+                _modelItem.Collection.Clear();
+                foreach (var m in newList)
+                    _modelItem.Collection.Add(m);
+                _modelItem.Index = 0;
+            };
             _mainMenu.AddItem(_genderItem);
 
             // Model
@@ -107,16 +114,6 @@ namespace PolicePartner
             _menuPool.ProcessMenus();
             if (_mainMenu.Visible)
                 RefreshStatus();
-        }
-
-        // Correct delegate signature for RageNativeUI: (UIMenuListItem sender, int newIndex)
-        private void OnGenderChanged(UIMenuListItem sender, int newIndex)
-        {
-            var newList = newIndex == 1 ? FemaleModelLabels : MaleModelLabels;
-            _modelItem.Collection.Clear();
-            foreach (var m in newList)
-                _modelItem.Collection.Add(m);
-            _modelItem.Index = 0;
         }
 
         private void OnItemSelect(UIMenu sender, UIMenuItem selectedItem, int index)

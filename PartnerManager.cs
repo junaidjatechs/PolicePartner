@@ -18,22 +18,17 @@ namespace PolicePartner
 
     public class PartnerManager
     {
-        // ── Public state ────────────────────────────────────────────────────
         public Ped Partner { get; private set; }
         public PartnerState State { get; private set; } = PartnerState.None;
         public bool HasPartner => Partner != null && Partner.Exists() && Partner.IsAlive;
 
-        // ── Spawn options (set by menu before spawning) ──────────────────────
         public bool SpawnFemale { get; set; } = false;
-        public string ChosenModel { get; set; } = ""; // empty = auto-pick
+        public string ChosenModel { get; set; } = "";
 
-        // ── Private tracking ────────────────────────────────────────────────
-        private Vehicle _stopVehicle;       // vehicle involved in current traffic stop
-        private Ped _watchedSuspect;        // ped being watched / detained
-        private int _stateTimer;            // generic countdown (ms)
-        private const int FollowDistance = 2;  // metres behind player
+        private Vehicle _stopVehicle;
+        private Ped _watchedSuspect;
+        private const int FollowDistance = 2;
 
-        // Passenger-side models available in LSPDFR
         private static readonly string[] MaleModels =
         {
             "s_m_y_cop_01", "s_m_y_hwaycop_01", "s_m_y_sheriff_01",
@@ -44,9 +39,6 @@ namespace PolicePartner
             "s_f_y_cop_01", "s_f_y_sheriff_01"
         };
 
-        // ── Public API ───────────────────────────────────────────────────────
-
-        /// <summary>Spawn or respawn the partner near the player.</summary>
         public bool SpawnPartner()
         {
             DismissPartner(false);
@@ -56,8 +48,8 @@ namespace PolicePartner
 
             if (!model.IsValid)
             {
-                Game.LogTrivial($"[PolicePartner] Model {modelName} not valid.");
-                Game.DisplayNotification($"~r~[Police Partner]~w~ Model not found: {modelName}");
+                Game.LogTrivial("[PolicePartner] Model " + modelName + " not valid.");
+                Game.DisplayNotification("~r~[Police Partner]~w~ Model not found: " + modelName);
                 return false;
             }
 
@@ -72,28 +64,23 @@ namespace PolicePartner
                 return false;
             }
 
-            // Basic cop setup
             Partner.IsPersistent = true;
             Partner.BlockPermanentEvents = true;
             Partner.Tasks.Clear();
 
-            // Give weapon
+            // Give weapon using correct RPH API
             if (Config.AutoEquipWeapon)
             {
-                var weapon = (WeaponHash)Game.GetHashKey(Config.DefaultWeapon);
-                Partner.GiveNewWeapon(weapon, 120, true);
+                WeaponHash weaponHash = (WeaponHash)Game.GetHashKey(Config.DefaultWeapon);
+                Partner.Inventory.GiveNewWeapon(weaponHash, 120, true);
             }
-
-            // Register with LSPDFR so it counts as a cop
-            Functions.SetCopAsBuddyCop(Partner);
 
             SetState(PartnerState.Following);
             Game.DisplayNotification("~b~[Police Partner]~w~ Partner is on duty. Press ~y~" + Config.FollowKey + "~w~ to regroup.");
-            Game.LogTrivial($"[PolicePartner] Partner spawned: {modelName}");
+            Game.LogTrivial("[PolicePartner] Partner spawned: " + modelName);
             return true;
         }
 
-        /// <summary>Dismiss partner cleanly.</summary>
         public void DismissPartner(bool permanent)
         {
             if (!HasPartner) return;
@@ -110,7 +97,6 @@ namespace PolicePartner
                 Game.DisplayNotification("~b~[Police Partner]~w~ Partner dismissed.");
         }
 
-        /// <summary>Force partner to run back to player (Y key).</summary>
         public void ForceFollow()
         {
             if (!HasPartner) return;
@@ -121,7 +107,6 @@ namespace PolicePartner
                 3.0f);
         }
 
-        /// <summary>Called every tick from main loop.</summary>
         public void Process()
         {
             if (!HasPartner) return;
@@ -131,15 +116,12 @@ namespace PolicePartner
                 case PartnerState.Following:
                     ProcessFollowing();
                     break;
-
                 case PartnerState.TrafficStop_PassengerSide:
                     ProcessPassengerSide();
                     break;
-
                 case PartnerState.WatchingSuspect:
                     ProcessWatchSuspect();
                     break;
-
                 case PartnerState.CoveringThreat:
                     ProcessCoverThreat();
                     break;
@@ -147,8 +129,6 @@ namespace PolicePartner
 
             CheckForTrafficStop();
         }
-
-        // ── State processors ─────────────────────────────────────────────────
 
         private void ProcessFollowing()
         {
@@ -165,7 +145,6 @@ namespace PolicePartner
             }
             else
             {
-                // Stand beside player, face same direction
                 Partner.Tasks.AchieveHeading(player.Heading);
             }
         }
@@ -178,20 +157,17 @@ namespace PolicePartner
                 return;
             }
 
-            // Passenger side offset: right of vehicle
             Vector3 targetPos = _stopVehicle.GetOffsetPosition(new Vector3(2.5f, 0f, 0f));
-
             float dist = Vector3.Distance(Partner.Position, targetPos);
+
             if (dist > 1.5f)
             {
                 Partner.Tasks.FollowNavigationMeshToPosition(targetPos, _stopVehicle.Heading, 2.0f, 0.3f);
             }
             else
             {
-                // Face the vehicle
                 Partner.Tasks.AchieveHeading(_stopVehicle.Heading + 90f);
 
-                // Auto-transition to watching if there's a suspect
                 _watchedSuspect = FindNearestPedToVehicle(_stopVehicle);
                 if (_watchedSuspect != null)
                     SetState(PartnerState.WatchingSuspect);
@@ -206,14 +182,10 @@ namespace PolicePartner
                 return;
             }
 
-            // Face suspect and keep eyes on them
             NativeFunction.Natives.TASK_TURN_PED_TO_FACE_ENTITY(Partner, _watchedSuspect, 1000);
 
-            // If suspect becomes hostile or runs — draw weapon
             if (_watchedSuspect.IsInCombat || _watchedSuspect.IsFleeing)
-            {
                 SetState(PartnerState.CoveringThreat);
-            }
         }
 
         private void ProcessCoverThreat()
@@ -221,23 +193,18 @@ namespace PolicePartner
             if (_watchedSuspect == null || !_watchedSuspect.Exists() ||
                 (!_watchedSuspect.IsInCombat && !_watchedSuspect.IsFleeing))
             {
-                // Threat resolved — holster and go back to watching
                 Partner.Tasks.Clear();
                 SetState(_watchedSuspect != null ? PartnerState.WatchingSuspect : PartnerState.Following);
                 return;
             }
 
-            // Draw weapon and aim at suspect
             Partner.Tasks.AimWeaponAt(_watchedSuspect, -1);
-            NativeFunction.Natives.SET_PED_COMBAT_ATTRIBUTES(Partner, 46, true); // use cover
-            NativeFunction.Natives.SET_PED_COMBAT_ATTRIBUTES(Partner, 5, true);  // can fight armed
+            NativeFunction.Natives.SET_PED_COMBAT_ATTRIBUTES(Partner, 46, true);
+            NativeFunction.Natives.SET_PED_COMBAT_ATTRIBUTES(Partner, 5, true);
         }
-
-        // ── Traffic stop detection ───────────────────────────────────────────
 
         private void CheckForTrafficStop()
         {
-            // LSPDFR API: check if player is in a traffic stop
             bool inStop = Functions.IsPlayerPerformingPullover();
 
             if (inStop && State == PartnerState.Following)
@@ -245,7 +212,8 @@ namespace PolicePartner
                 LHandle pullover = Functions.GetCurrentPullover();
                 if (pullover != null)
                 {
-                    _stopVehicle = Functions.GetPulloverSuspect(pullover)?.CurrentVehicle;
+                    Ped suspect = Functions.GetPulloverSuspect(pullover);
+                    _stopVehicle = suspect != null && suspect.Exists() ? suspect.CurrentVehicle : null;
                     if (_stopVehicle != null && _stopVehicle.Exists())
                     {
                         SetState(PartnerState.TrafficStop_PassengerSide);
@@ -257,7 +225,6 @@ namespace PolicePartner
                                   State == PartnerState.WatchingSuspect ||
                                   State == PartnerState.CoveringThreat))
             {
-                // Stop ended — regroup
                 _stopVehicle = null;
                 _watchedSuspect = null;
                 Partner.Tasks.Clear();
@@ -266,18 +233,11 @@ namespace PolicePartner
             }
         }
 
-        // ── Helpers ──────────────────────────────────────────────────────────
-
         private string ResolveModel()
         {
             if (!string.IsNullOrWhiteSpace(ChosenModel))
                 return ChosenModel;
-
-            var pool = SpawnFemale ? FemaleModels : MaleModels;
-            // Match player's department by checking their model name
-            string playerModel = NativeFunction.Natives.GET_ENTITY_MODEL<int>(Game.LocalPlayer.Character).ToString();
-            // Default: first in pool
-            return pool[0];
+            return SpawnFemale ? FemaleModels[0] : MaleModels[0];
         }
 
         private Vector3 GetSpawnPosition()
@@ -288,9 +248,13 @@ namespace PolicePartner
 
         private Ped FindNearestPedToVehicle(Vehicle v)
         {
+            // Use RelationshipGroup to exclude cops instead of IsPolice
+            uint copGroup = (uint)Game.GetHashKey("COP");
             return World.GetAllPeds()
-                .Where(p => p.Exists() && p != Partner && p != Game.LocalPlayer.Character
-                            && !p.IsPolice
+                .Where(p => p.Exists()
+                            && p != Partner
+                            && p != Game.LocalPlayer.Character
+                            && (uint)p.RelationshipGroup != copGroup
                             && Vector3.Distance(p.Position, v.Position) < 10f)
                 .OrderBy(p => Vector3.Distance(p.Position, v.Position))
                 .FirstOrDefault();
@@ -299,7 +263,7 @@ namespace PolicePartner
         private void SetState(PartnerState newState)
         {
             State = newState;
-            Game.LogTrivial($"[PolicePartner] State → {newState}");
+            Game.LogTrivial("[PolicePartner] State -> " + newState);
         }
     }
 }

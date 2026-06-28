@@ -26,4 +26,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: PolicePartner
-          path: bin\x64\Release\PolicePartner.dll
+          path: bin\x64\Release\net48\PolicePartner.dll

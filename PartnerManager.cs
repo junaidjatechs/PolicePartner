@@ -249,7 +249,7 @@ namespace PolicePartner
         private Ped FindNearestPedToVehicle(Vehicle v)
         {
             // Use RelationshipGroup to exclude cops instead of IsPolice
-            RelationshipGroup copGroup = new RelationshipGroup(Game.GetHashKey("COP"));
+            RelationshipGroup copGroup = new RelationshipGroup("COP");
             return World.GetAllPeds()
                 .Where(p => p.Exists()
                             && p != Partner

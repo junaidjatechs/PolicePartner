@@ -22,22 +22,22 @@
 
   <ItemGroup>
     <!-- RAGEPluginHook -->
-    <Reference Include="RAGEPluginHook">
-      <HintPath>$(GTAVPath)\RAGEPluginHook.exe</HintPath>
-      <Private>false</Private>
-    </Reference>
+<Reference Include="RAGEPluginHook">
+  <HintPath>libs\RAGEPluginHook.exe</HintPath>
+  <Private>false</Private>
+</Reference>
 
     <!-- LSPDFR -->
-    <Reference Include="LSPD First Response">
-      <HintPath>$(GTAVPath)\Plugins\LSPD First Response.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
+<Reference Include="LSPD First Response">
+  <HintPath>libs\LSPD First Response.dll</HintPath>
+  <Private>false</Private>
+</Reference>
 
     <!-- RageNativeUI -->
-    <Reference Include="RAGENativeUI">
-      <HintPath>$(GTAVPath)\RAGENativeUI.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
+<Reference Include="RAGENativeUI">
+  <HintPath>libs\RAGENativeUI.dll</HintPath>
+  <Private>false</Private>
+</Reference>
   </ItemGroup>
 
   <!--

@@ -11,11 +11,14 @@
     <Optimize>true</Optimize>
   </PropertyGroup>
 
-  <ItemGroup>
-    <!-- RPH from NuGet — no manual DLL needed -->
-    <PackageReference Include="RagePluginHook" Version="1.1.0" />
+<ItemGroup>
+    <!-- RPH from NuGet -->
+    <PackageReference Include="RagePluginHook" Version="1.86.0" />
 
-    <!-- These still come from libs/ — upload from your GTA V folder -->
+    <!-- System.Windows.Forms for Keys enum -->
+    <Reference Include="System.Windows.Forms" />
+
+    <!-- These still come from libs/ -->
     <Reference Include="LSPD First Response">
       <HintPath>libs\LSPD First Response.dll</HintPath>
       <Private>false</Private>
